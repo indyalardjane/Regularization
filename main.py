@@ -57,6 +57,12 @@ def train(epoch):
                     elif args.reg == 'l0':
                         l0 = torch.count_nonzero(m.weight)
                         laccum += l0.item()
+                    elif args.reg == 'l12':
+                        l12 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/2)),1/4)
+                        laccum += l12.item()
+                    elif args.reg == 'l23':
+                        l23 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/3)),1/6)
+                        laccum += l23.item()                    
             return loss_f, laccum
 
         loss, reg, norm_s, xi, sigma, rho, criteria, stop = optimizer.step(closure=closure)
@@ -172,6 +178,12 @@ if args.reg == 'l1':
                            lmbda=args.lam, sigma=sigma, weight_decay=args.wd)
 elif args.reg == 'l0':
     optimizer = SR2optiml0(model.parameters(), nu1=args.eta1, nu2=args.eta2, g1=args.g1, g2=args.g2, g3=args.g3,
+                           lmbda=args.lam, sigma=sigma, weight_decay=args.wd)
+elif args.reg == 'l12':
+    optimizer = SR2optiml12(model.parameters(), nu1=args.eta1, nu2=args.eta2, g1=args.g1, g2=args.g2, g3=args.g3,
+                           lmbda=args.lam, sigma=sigma, weight_decay=args.wd)
+elif args.reg == 'l23':
+    optimizer = SR2optiml23(model.parameters(), nu1=args.eta1, nu2=args.eta2, g1=args.g1, g2=args.g2, g3=args.g3,
                            lmbda=args.lam, sigma=sigma, weight_decay=args.wd)
 else:
     print('>> Regularization term not supported')
