@@ -11,7 +11,8 @@ class SR2optiml12(SR2optim):
     def get_step(self, x, grad, sigma, lmbda):
         p = 3/4 * (2 * lmbda/ sigma)**(2/3)
         phi = torch.arccos((2 * lmbda)/(8 * sigma) * (torch.abs(x.data - grad / sigma)/3)**(-3/2))
-        step = torch.where(x.data - grad / sigma > p, 2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, 
+        step = torch.where(x.data - grad / sigma > p, 
+                           2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, 
                            torch.where(x.data - grad / sigma <  -p,
                           -2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, -x.data))
         return step
@@ -32,8 +33,9 @@ class SR2optiml23(SR2optim):
 #         print('phi', phi)
         A = 2/np.sqrt(3) * ((2* lmbda/sigma)**(1/4)) * ((torch.cosh(phi/3))**(1/2))
         cond = (2/3) * (3 * (2 * lmbda / sigma)**3)**(1/4)
-        step = torch.where( x.data - grad / sigma > cond,((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data,
-                              torch.where(x.data - grad / sigma <  -cond,
-                              -((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data, -x.data))
+        step = torch.where( x.data - grad / sigma > cond,
+                             ((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data,
+                             torch.where(x.data - grad / sigma <  -cond,
+                             -((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data, -x.data))
         return step
 
