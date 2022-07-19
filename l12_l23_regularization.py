@@ -3,39 +3,39 @@ import torch
 
 #l1/2 regularization
 class SR2optiml12(SR2optim):
-    def __init__(self, params, nu1=1e-4, nu2=0.9, g1=1.5, g2=1.25, g3=0.5, lmbda=0.001, sigma=0.75,
-                 weight_decay=0.2):
-        super().__init__(params, nu1=nu1, nu2=nu2, g1=g1, g2=g2, g3=g3, lmbda=lmbda, sigma=sigma,
-                         weight_decay=weight_decay)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def get_step(self, x, grad, sigma, lmbda):
+        X = x.data - grad / sigma
         p = 3/4 * (2 * lmbda/ sigma)**(2/3)
-        phi = torch.arccos((2 * lmbda)/(8 * sigma) * (torch.abs(x.data - grad / sigma)/3)**(-3/2))
-        step = torch.where(x.data - grad / sigma > p, 
-                           2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, 
-                           torch.where(x.data - grad / sigma <  -p,
-                          -2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, -x.data))
+        phi = torch.arccos((lmbda)/(4 * sigma) * (torch.abs(X)/3)**(-3/2))
+        s = 2/3 * torch.abs(X) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi ))
+        
+        step = torch.where(X > p, s - x.data, 
+                           torch.where(X <  -p, -s - x.data, -x.data))
         return step
 
 
 #l2/3 regularization
 class SR2optiml23(SR2optim):
-    def __init__(self, params, nu1=1e-4, nu2=0.9, g1=1.5, g2=1.25, g3=0.5, lmbda=0.001, sigma=0.75,
-                weight_decay=0.2):
-        super().__init__(params, nu1=nu1, nu2=nu2, g1=g1, g2=g2, g3=g3, lmbda=lmbda, sigma=sigma,
-                         weight_decay=weight_decay)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def get_step(self, x, grad, sigma, lmbda):
-#         print('lambda =', lmbda, 'sigma =', sigma)
-#         print('lambda/sigma puissance =', (2* lmbda/sigma)**(-3/2))
-#         print('arg arccosh = ', torch.max(27 * (x.data - grad / sigma)**2 /16 * (2* lmbda/sigma)**(-3/2)))
-        phi = torch.arccosh((27 * ((x.data - grad / sigma)**2) /16) * (2* lmbda/sigma)**(-3/2))
-#         print('phi', phi)
-        A = 2/np.sqrt(3) * ((2* lmbda/sigma)**(1/4)) * ((torch.cosh(phi/3))**(1/2))
-        cond = (2/3) * (3 * (2 * lmbda / sigma)**3)**(1/4)
-        step = torch.where( x.data - grad / sigma > cond,
-                             ((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data,
-                             torch.where(x.data - grad / sigma <  -cond,
-                             -((A + torch.sqrt((2 * torch.abs(x.data - grad / sigma))/A - A**2)) / 2)**3 - x.data, -x.data))
+#         logging.basicConfig(level=logging.DEBUG)
+#         logging.debug('lambda = {}, sigma = '.format(lmbda, sigma))
+        X = x.data - grad / sigma
+        L = 2* lmbda/sigma
+#         logging.debug('arg arccosh = '.format(torch.max(27 * (x.data - grad / sigma)**2 /16 * (2* lmbda/sigma)**(-3/2))))
+#         logging.debug('lambda/sigma puissance ='.format((L)**(-3/2)))
+        phi = torch.arccosh((27 * ((X)**2) /16) * (L)**(-3/2))
+#         logging.debug('phi = '.format(phi))
+        A = 2/np.sqrt(3) * (L**(1/4)) * ((torch.cosh(phi/3))**(1/2))
+        cond = (2/3) * (3 * (L)**3)**(1/4)
+        s = ((A + torch.sqrt((2 * torch.abs(X))/A - A**2)) / 2)**3
+        
+        step = torch.where( X > cond, s - x.data,
+                             torch.where(X <  -cond, -s - x.data, -x.data))
         return step
 
