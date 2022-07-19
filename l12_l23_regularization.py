@@ -5,7 +5,7 @@ class SR2optiml12(SR2optim):
         super().__init__(params, nu1=nu1, nu2=nu2, g1=g1, g2=g2, g3=g3, lmbda=lmbda, sigma=sigma, weight_decay=weight_decay)
 
     def get_step(self, x, grad, sigma, lmbda):
-        p = 3/4 * (2 * lmbda/ sigma)**(2/3)
+        p = 54**(1/3)/4 * (2 * lmbda/ sigma)**(2/3)
         phi = torch.arccos((2 * lmbda)/(8 * sigma) * (torch.abs(x.data - grad / sigma)/3)**(-3/2))
         step = torch.where(x.data - grad / sigma > p, 
                            2/3 * torch.abs(x.data - grad / sigma) * (1 + torch.cos(2 * torch.pi /3 - 2/3 * phi )) - x.data, 
