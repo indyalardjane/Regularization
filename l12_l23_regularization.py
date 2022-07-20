@@ -34,7 +34,7 @@ class SR2optiml23(SR2optim):
 #         logging.debug('phi = '.format(phi))
         A = 2/np.sqrt(3) * L**(1/4) * (torch.cosh(phi/3))**(1/2)
         cond = 2/3 * (3 * L**3)**(1/4)
-        s = ((A + torch.sqrt((2 * torch.abs(X))/A - A**2)) / 2)**3
+        s = ((A + ((2 * torch.abs(X))/A - A**2)**(1/2)) / 2)**3
         
         step = torch.where(X > cond, s - x.data,
                            torch.where(X <  -cond, -s - x.data, -x.data))
