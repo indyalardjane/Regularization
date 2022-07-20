@@ -98,13 +98,11 @@ class SR2optim(Optimizer):
                 state['s'] = torch.zeros_like(x.data)
                 state['vt'] = torch.zeros_like(x.data, memory_format=torch.preserve_format)
 
-            alpha = 0.9
-            momentum = grad * alpha + state['vt'] * (1 - alpha)
-
-            state['vt'] = grad
+            beta = 0.9
+            state['vt'] = grad * (1 - beta) + state['vt'] * beta 
 
             # Compute the step s
-            state['s'].data = self.get_step(x, momentum, sigma, lmbda)
+            state['s'].data = self.get_step(x, state['vt'], sigma, lmbda)
             norm_s += torch.sum(torch.square(state['s'])).item()
 
             # phi(x+s) ~= f(x) + grad^T * s
