@@ -39,4 +39,30 @@ class SR2optiml23(SR2optim):
         step = torch.where(X > cond, s - x.data,
                            torch.where(X <  -cond, -s - x.data, -x.data))
         return step
+    
+    
+#Test l2/3 regularization
+
+class SR2optiml23(SR2optim):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    def get_step(self, x, grad, sigma, lmbda):
+        X = x.data - grad / sigma
+        L = 2* lmbda/sigma
+        cond = 2/3 * (3 * L**3)**(1/4)
+        if torch.min(X) > cond :
+            phi = torch.arccosh(27/16 * X**2 * L**(-3/2))
+            A = 2/np.sqrt(3) * L**(1/4) * (torch.cosh(phi/3))**(1/2)
+            s = ((A + ((2 * torch.abs(X))/A - A**2)**(1/2)) / 2)**3
+            step = s - x.data
+        if torch.max(X) < -cond :
+            phi = torch.arccosh(27/16 * X**2 * L**(-3/2))
+            A = 2/np.sqrt(3) * L**(1/4) * (torch.cosh(phi/3))**(1/2)
+            s = ((A + ((2 * torch.abs(X))/A - A**2)**(1/2)) / 2)**3
+            step = -s - x.data
+        if torch.min(abs(X)) <= cond:
+            step = -x.data
+        return step
+
 
