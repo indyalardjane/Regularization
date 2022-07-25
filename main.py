@@ -58,10 +58,10 @@ def train(epoch):
                         l0 = torch.count_nonzero(m.weight)
                         laccum += l0.item()
                     elif args.reg == 'l12':
-                        l12 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/2)),1/4)
+                        l12 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/2)),2)
                         laccum += l12.item()
                     elif args.reg == 'l23':
-                        l23 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/3)),1/6)
+                        l23 = torch.pow(torch.sum(torch.pow(torch.abs(m.weight),1/3)),3)
                         laccum += l23.item()                    
             return loss_f, laccum
 
