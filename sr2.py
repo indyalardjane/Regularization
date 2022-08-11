@@ -97,6 +97,8 @@ class SR2optim(Optimizer):
             if len(state) == 0:
                 state['s'] = torch.zeros_like(x.data)
                 state['vt'] = torch.zeros_like(x.data, memory_format=torch.preserve_format)
+                B = np.eye(len(state['s'])) *  0.5 * sigma
+
 
             beta = 0.9
             state['vt'] = grad * (1 - beta) + state['vt'] * beta 
@@ -104,6 +106,28 @@ class SR2optim(Optimizer):
             # Compute the step s
             state['s'].data = self.get_step(x, state['vt'], sigma, lmbda)
             norm_s += torch.sum(torch.square(state['s'])).item()
+            
+            
+            #Update B
+            A = np.eye(len(state['s']))
+            #c=0
+            #for i in state['s']:
+             #   A[i][i] = i^2
+              #  c += 1
+            trA2 = 0
+            for i in state['s']:
+                trA2 += i^4
+            sT_s = np.dot(state['s'],state['s'])
+            sT_y = np.dot(state['s'],y)
+            sT_B_s = sum(state['s'][i]^2 * B[i][i] for i in range(0, len(state['s'])-1))
+            if trA2 == 0:
+                logging.error("Cannot divide by zero and trA2 = 0")
+            q = (sT_y + sT_s - sT_B_s)/trA2
+            for i in range(0, len(state['s'])-1):
+                B[i][i] =  B[i][i] + q *(state['s'][i])^2  - 1
+
+            #B = B + q * A - np.eye(len(state['s']))
+
 
             # phi(x+s) ~= f(x) + grad^T * s
             flat_g = grad.view(-1)
@@ -130,7 +154,8 @@ class SR2optim(Optimizer):
         hxs *= lmbda
 
         # Compute model
-        m_s = phi_x + hxs + 0.5 * sigma * norm_s ** 2
+        Dt = B + np.eye(len(s)) * sigma
+        m_s = phi_x + hxs + 0.5 * sum(s[i]^2 * Dt[i, i] for i in len(s))=
         xi = current_obj - m_s
 
         # Rho
